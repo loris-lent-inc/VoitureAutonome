@@ -16,9 +16,11 @@ class traitement_image:
         self.picam = Picamera2()
         config = self.picam.create_still_configuration({"size": size_tuple})
         self.picam.configure(config)
+        self.picam.start()
         self.f_count = 0
         self.total_time = 0
         self.curr_steering_angle = stabilized_steering_angle = 90
+        self.exit = False
         cv2.namedWindow("Detection d'objets")
         
 
@@ -184,7 +186,7 @@ class traitement_image:
         logging.debug('nouvel angle de braquage: %s' % steering_angle)
         return steering_angle
 
-    def display_heading_line(frame, steering_angle, line_color=(0, 0, 255), line_width=5):
+    def display_heading_line(self, frame, steering_angle, line_color=(0, 0, 255), line_width=5):
         heading_image = np.zeros_like(frame)
         try:
             height, width, _ = frame.shape
@@ -252,7 +254,7 @@ class traitement_image:
             frame = cv2.rotate(cv2.cvtColor(acq, cv2.COLOR_RGB2BGR), cv2.ROTATE_180)
 
             # Détection de voies
-            edges, lane_lines = self.detect_lane(frame, show)
+            lane_lines = self.detect_lane(frame, show)
             if len(lane_lines)>0:
                 new_steering_angle = self.compute_steering_angle(frame, lane_lines)
                 # Stabilisation
@@ -263,7 +265,7 @@ class traitement_image:
                 self.curr_steering_angle = stabilized_steering_angle
 
             # Génération de l'image finale
-            heading_image = self.display_heading_line(frame, self.curr_steering_angle, (255,255,255))
+            heading_image = self.display_heading_line(self.edges, self.curr_steering_angle, (255,255,255))
 
             # Mesures de performance
             self.end_time = time.perf_counter()
@@ -280,17 +282,19 @@ class traitement_image:
                 self.total_time = 0
 
             # Affichage des résultats
-            print(f"t = {self.p_time:.4f}s ; FPS = {fps:.2f} ; Angle = {self.curr_steering_angle:.0f}°")
             cv2.imshow("Detection d'objets", heading_image)
-
-        finally:
+            print(f"t = {self.p_time:.4f}s ; FPS = {fps:.2f} ; Angle = {self.curr_steering_angle:.0f}°")
+        except Exception as e:
+            print("Error: %s", repr(e))
             self.picam.stop()
+            self.exit = True
 
 
 if __name__ == "__main__":
     t = traitement_image()
     
-    while True:
+    while not t.exit:
         t.test_video_picam()
         if cv2.waitKey(1) == ord('q'):
+            t.picam.stop()
             break
