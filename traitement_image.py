@@ -286,9 +286,11 @@ class traitement_image:
             print(f"t = {self.p_time:.4f}s ; FPS = {fps:.2f} ; Angle = {self.curr_steering_angle:.0f}°")
         except Exception as e:
             print("Error: %s", repr(e))
-            self.picam.stop()
-            self.exit = True
+            self.finish()
 
+    def finish(self):
+        self.picam.stop()
+        self.exit = True
 
 if __name__ == "__main__":
     t = traitement_image()
@@ -296,5 +298,4 @@ if __name__ == "__main__":
     while not t.exit:
         t.test_video_picam()
         if cv2.waitKey(1) == ord('q'):
-            t.picam.stop()
-            break
+            t.finish()
