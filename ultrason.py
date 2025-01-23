@@ -36,7 +36,7 @@ class ultrason:
         #print(fin, debut, duree, distance)
         return distance
     
-    def finish():
+    def finish(self):
         GPIO.cleanup()  # Réinitialise les GPIO
 
 
