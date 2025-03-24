@@ -265,7 +265,7 @@ class traitement_image:
                 self.curr_steering_angle = stabilized_steering_angle
 
             # Génération de l'image finale
-            heading_image = self.display_heading_line(self.edges, self.curr_steering_angle, (255,255,255))
+            heading_image = self.display_heading_line(frame, self.curr_steering_angle, (255,255,255))
 
             # Mesures de performance
             self.end_time = time.perf_counter()
@@ -283,7 +283,7 @@ class traitement_image:
 
             # Affichage des résultats
             cv2.imshow("Detection d'objets", heading_image)
-            print(f"t = {self.p_time:.4f}s ; FPS = {fps:.2f} ; Angle = {self.curr_steering_angle:.0f}°")
+            print(f"FPS = {fps:.2f} ; Angle = {self.curr_steering_angle:.0f}°")
         except Exception as e:
             print("Error: %s", repr(e))
             self.finish()

@@ -86,7 +86,10 @@ class WatchdogThread(threading.Thread):
         while self.running:
             current_time = time.time()
             for thread in self.threads:
-                if not thread.is_alive():
+                if thread == None:
+                    continue
+                
+                elif not thread.is_alive():
                     print(f"Restarting {thread.name}")
                     thread.start()
                 elif current_time - thread.last_heartbeat > self.timeout:
