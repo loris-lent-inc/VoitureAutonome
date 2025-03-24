@@ -21,14 +21,17 @@ class traitement_image:
         self.total_time = 0
         self.curr_steering_angle = stabilized_steering_angle = 90
         self.exit = False
+        self.current_image = []
         cv2.namedWindow("Detection d'objets")
         
 
-    def affiche_image(self, frame, title = "image"):
+    def affiche_image(self, title = "Detection d'objets"):
+        if len(self.current_image) == 0:
+            return
         cv2.namedWindow(title)
-        cv2.imshow(title, frame)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        cv2.imshow(title, self.current_image)
+        cv2.waitKey(1)
+        #print("shown")
 
     def detect_edges(self, frame, showDetec=True):  # Créé une nouvelle image avec les bordure des objets bleu
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # On transforme le format BRG en HSV pour éviter les différentes teintes de bleu due à la luminosité
@@ -282,7 +285,7 @@ class traitement_image:
                 self.total_time = 0
 
             # Affichage des résultats
-            cv2.imshow("Detection d'objets", heading_image)
+            self.current_image = heading_image
             print(f"FPS = {fps:.2f} ; Angle = {self.curr_steering_angle:.0f}°")
         except Exception as e:
             print("Error: %s", repr(e))

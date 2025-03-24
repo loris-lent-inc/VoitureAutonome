@@ -9,6 +9,7 @@ class ultrason:
         GPIO.setmode(GPIO.BCM)  # Utilise la numérotation BCM
         GPIO.setup(self.trigger_pin, GPIO.OUT)
         GPIO.setup(self.echo_pin, GPIO.IN)
+        self.last_mesure = -1
     
     def mesurer_distance(self):
         # S'assurer que le Trigger est bas
@@ -34,6 +35,7 @@ class ultrason:
         # Calculer la distance (vitesse du son = 34300 cm/s)
         distance = (duree * 34300) / 2  # Divisé par 2 pour l'aller simple
         #print(fin, debut, duree, distance)
+        self.last_mesure = distance
         return distance
     
     def finish(self):

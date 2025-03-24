@@ -11,33 +11,41 @@ CAM_ENABLE = True
 US_ENABLE = False
 
 def setup():
-    control_thread = image_thread = ultrason_thread = None
+    toolbox = Toolbox(DIR_PIN, PWM_PIN, TRIGGER_PIN, ECHO_PIN)
     
     if MECA_ENABLE:
-        control_thread = ControlThread(components.ctrl)
+        toolbox.ctrl_thread = ControlThread(toolbox.ctrl)
     if CAM_ENABLE:
-        image_thread = ImageProcessingThread(components.trt)
+        toolbox.trt_thread = ImageProcessingThread(toolbox.trt)
     if US_ENABLE:
-        ultrason_thread = UltrasonThread(components.us)
+        toolbox.us_thread = UltrasonThread(toolbox.us)
     
-    watchdog_thread = WatchdogThread([control_thread, image_thread, ultrason_thread])
+    toolbox.watchdog = WatchdogThread([toolbox.ctrl_thread, toolbox.trt_thread, toolbox.us_thread])
+    #tools_threads = [control_thread, image_thread, ultrason_thread, toolbox_watchdog]
     
-    threads = [control_thread, image_thread, ultrason_thread, watchdog_thread]
-    return threads
+    print("Finished setting up threads and components")
+    return toolbox
 
-def main_loop(components):
+def main_loop(toolbox):
     keep_going = True
     k_interrupt = False
+    
+    if MECA_ENABLE:
+        toolbox.ctrl_thread.start()
+    if CAM_ENABLE:
+        toolbox.trt_thread.start()
+    if US_ENABLE:
+        toolbox.us_thread.start()
+    toolbox.watchdog.start()
+    
     while keep_going:
         # mesure:
         if US_ENABLE:
-            print(us.mesurer_distance())
+            print(toolbox.us.last_mesure)
         
         # traitement:
         if CAM_ENABLE:
-            components.trt.test_video_picam()
-            if cv2.waitKey(1) == ord('q'):
-                trt.stop()
+            toolbox.trt.affiche_image()
         
         # controle :
         if MECA_ENABLE:
@@ -45,24 +53,24 @@ def main_loop(components):
                 if speed > 99 or speed < 1:
                     accel *= -1
                 speed += accel
-                components.ctrl.setAccel(speed)
+                toolbox.ctrl.setAccel(speed)
             except KeyboardInterrupt:
                 k_interrupt = True
         
         # sleep:
-        time.sleep(0.02)
+        time.sleep(0.5)
 
         # conditionnal exit:
-        if components.trt.exit or k_interrupt:
-            components.finish()
+        if toolbox.trt.exit or k_interrupt:
+            tools.finish()
             keep_going = False
     
     return True
 
 
 if __name__ == "__main__":
-    components = tools(DIR_PIN, PWM_PIN, TRIGGER_PIN, ECHO_PIN)
-    main_loop(components)
-    components.finish()
+    toolbox = setup()
+    main_loop(toolbox)
+    toolbox.finish()
 
     

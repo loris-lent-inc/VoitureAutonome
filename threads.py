@@ -5,15 +5,18 @@ from controle_vehicule import *
 from traitement_image import *
 from ultrason import *
 
-class tools:
+class Toolbox:
     def __init__(self, DIR_PIN, PWM_PIN, TRIGGER_PIN, ECHO_PIN):
         self.ctrl = controle_vehicule(DIR_PIN, PWM_PIN)
         self.trt = traitement_image()
         self.us = ultrason(TRIGGER_PIN, ECHO_PIN)
+        
+        self.ctrl_thread = None
+        self.trt_thread = None
+        self.us_thread = None
+        self.watchdog = None
+        
         self.isFinished = False
-
-    def heartbeat(self):
-        self.last_heartbeat = time.time()
 
     def finish(self):
         if not self.isFinished:
@@ -22,21 +25,25 @@ class tools:
             self.us.finish()
             self.isFinished = True
 
-class ComponentThread(threading.Thread, ABC):
-    def __init__(self, component):
+class toolThread(threading.Thread, ABC):
+    def __init__(self, tool):
         threading.Thread.__init__(self)
-        self.component = component
+        self.tool = tool
         self.running = True
+        self.heartbeat()
 
     def finish(self):
         self.running = False
-        self.component.finish()
-
+        self.tool.finish()
+    
+    def heartbeat(self):
+        self.last_heartbeat = time.time()
+        
     @abstractmethod
     def run(self):
         pass
 
-class ControlThread(ComponentThread):
+class ControlThread(toolThread):
     def run(self):
         self.speed = 1
         self.accel = 1
@@ -46,7 +53,7 @@ class ControlThread(ComponentThread):
                 if self.speed > 99 or self.speed < 1:
                     self.accel *= -1
                 self.speed += self.accel
-                self.component.setAccel(self.speed)
+                self.tool.setAccel(self.speed)
                 self.heartbeat()
                 time.sleep(0.1)
             except KeyboardInterrupt:
@@ -54,22 +61,19 @@ class ControlThread(ComponentThread):
         
         self.finish()
 
-class ImageProcessingThread(ComponentThread):
+class ImageProcessingThread(toolThread):
     def run(self):
         while self.running:
-            self.component.test_video_picam()
-            if cv2.waitKey(1) == ord('q'):
-                self.component.stop()
-                self.running = False
+            self.tool.test_video_picam()
             self.heartbeat()
-            #time.sleep(0.1) # pas de sleep car déjà lent
+            time.sleep(0.2) # pas de sleep car déjà lent
             
         self.finish()
 
-class UltrasonThread(ComponentThread):
+class UltrasonThread(toolThread):
     def run(self):
         while self.running:
-            print(self.component.mesurer_distance())
+            print(self.tool.mesurer_distance())
             self.heartbeat()
             time.sleep(0.5)
         
@@ -96,7 +100,7 @@ class WatchdogThread(threading.Thread):
                     print(f"Thread {thread.name} is not responding. Restarting...")
                     thread.running = False
                     thread.join()
-                    new_thread = type(thread)(thread.component)
+                    new_thread = type(thread)(thread.tool)
                     self.threads[self.threads.index(thread)] = new_thread
                     new_thread.start()
             time.sleep(1)
