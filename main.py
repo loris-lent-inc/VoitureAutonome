@@ -1,55 +1,61 @@
 #!/usr/bin/env venv/bin/python
-from threads import *
 from gui import GUI
+from threads import *
+import cv2
 
-TRIGGER_PIN = 20
-ECHO_PIN = 21
-DIR_PIN = 18
-PWM_PIN = 19
-
-MECA_ENABLE = False
-CAM_ENABLE = True
-US_ENABLE = False
-
-def setup():
-    toolbox = Toolbox(DIR_PIN, PWM_PIN, TRIGGER_PIN, ECHO_PIN)
+def setup_and_start():
+    my_app.lock()
     
-    if MECA_ENABLE:
+    toolbox = Toolbox(int(my_app.dir_spin.var.get()), int(my_app.pwm_spin.var.get()), int(my_app.trig_spin.var.get()), int(my_app.echo_spin.var.get()))
+    print(f"MECA:{my_app.meca_state.get()} ; CAM: {my_app.trt_state.get()} ; US: {my_app.us_state.get()}")
+    
+    toolbox.watchdog = WatchdogThread()
+    if my_app.meca_state.get() == 'on':
         toolbox.ctrl_thread = ControlThread(toolbox.ctrl)
-    if CAM_ENABLE:
+        toolbox.watchdog.threads.append(toolbox.ctrl_thread)
+    if my_app.trt_state.get() == 'on':
         toolbox.trt_thread = ImageProcessingThread(toolbox.trt)
-    if US_ENABLE:
+        toolbox.watchdog.threads.append(toolbox.trt_thread)
+    if  my_app.us_state.get() == 'on':
         toolbox.us_thread = UltrasonThread(toolbox.us)
-    
-    toolbox.watchdog = WatchdogThread([toolbox.ctrl_thread, toolbox.trt_thread, toolbox.us_thread])
-    #tools_threads = [control_thread, image_thread, ultrason_thread, toolbox_watchdog]
+        toolbox.watchdog.threads.append(toolbox.us_thread)
     
     print("Finished setting up threads and components")
+    
+    main_loop(toolbox)
     return toolbox
 
 def main_loop(toolbox):
-    keep_going = True
-    k_interrupt = False
-    
-    if MECA_ENABLE:
+    # Start threads
+    if my_app.meca_state.get() == 'on':
         toolbox.ctrl_thread.start()
-    if CAM_ENABLE:
+    if my_app.trt_state.get() == 'on':
         toolbox.trt_thread.start()
-    if US_ENABLE:
+    if my_app.us_state.get() == 'on':
         toolbox.us_thread.start()
+    
+    # Starting watchdog
     toolbox.watchdog.start()
     
+    # Set variables
+    keep_going = True
+    k_interrupt = False
+    distance = 0
+    image = []
+    fps = 0
+    angle = 0
     while keep_going:
         # mesure:
-        if US_ENABLE:
-            print(toolbox.us.last_mesure)
+        if my_app.us_state.get() == 'on':
+            distance = toolbox.us.last_mesure
         
         # traitement:
-        if CAM_ENABLE:
-            toolbox.trt.affiche_image()
+        if my_app.trt_state.get() == 'on':
+            image, fps, angle = toolbox.trt.current_results
+            affiche_image(image)
         
         # controle :
-        if MECA_ENABLE:
+        if my_app.meca_state.get() == 'on':
             try:
                 if speed > 99 or speed < 1:
                     accel *= -1
@@ -57,6 +63,8 @@ def main_loop(toolbox):
                 toolbox.ctrl.setAccel(speed)
             except KeyboardInterrupt:
                 k_interrupt = True
+        
+        print(f"Distance: {distance:.1f}cm ; Angle: {angle} ; FPS: {fps:.1f}")
         
         # sleep:
         time.sleep(0.5)
@@ -68,11 +76,20 @@ def main_loop(toolbox):
     
     return True
 
+def affiche_image(image = [], title = "Detection d'objets"):
+    if len(image) == 0:
+        return
+    cv2.namedWindow(title)
+    cv2.imshow(title,image )
+    cv2.waitKey(1)
+    #print("shown")
+
 
 if __name__ == "__main__":
     my_app = GUI()
+    my_app.run_button.configure(command=setup_and_start)
     my_app.mainloop()
-    toolbox = setup()
+    #toolbox = setup()
     #main_loop(toolbox)
     #toolbox.finish()
 

@@ -44,7 +44,7 @@ class ultrason:
 
 
 if __name__ == "__main__":
-    us = ultrason(20, 21)
+    us = ultrason(6, 5)
 
     try:
         while True:

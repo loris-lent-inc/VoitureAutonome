@@ -1,9 +1,10 @@
 import threading
 import time
 from abc import ABC, abstractmethod
-from controle_vehicule import *
-from traitement_image import *
-from ultrason import *
+from controle_vehicule import controle_vehicule
+from traitement_image import traitement_image
+from ultrason import ultrason
+
 
 class Toolbox:
     def __init__(self, DIR_PIN, PWM_PIN, TRIGGER_PIN, ECHO_PIN):
@@ -66,23 +67,22 @@ class ImageProcessingThread(toolThread):
         while self.running:
             self.tool.test_video_picam()
             self.heartbeat()
-            time.sleep(0.2) # pas de sleep car déjà lent
-            
+            time.sleep(0.1) # pas de sleep car déjà lent
         self.finish()
 
 class UltrasonThread(toolThread):
     def run(self):
         while self.running:
-            print(self.tool.mesurer_distance())
+            self.tool.mesurer_distance()
             self.heartbeat()
             time.sleep(0.5)
         
         self.finish()
 
 class WatchdogThread(threading.Thread):
-    def __init__(self, threads, timeout=5):
+    def __init__(self, timeout=10):
         threading.Thread.__init__(self)
-        self.threads = threads
+        self.threads = []
         self.running = True
         self.timeout = timeout
 
