@@ -1,5 +1,6 @@
 #!/usr/bin/env venv/bin/python
 from threads import *
+from gui import GUI
 
 TRIGGER_PIN = 20
 ECHO_PIN = 21
@@ -69,8 +70,10 @@ def main_loop(toolbox):
 
 
 if __name__ == "__main__":
+    my_app = GUI()
+    my_app.mainloop()
     toolbox = setup()
-    main_loop(toolbox)
-    toolbox.finish()
+    #main_loop(toolbox)
+    #toolbox.finish()
 
     

@@ -1,3 +1,5 @@
 opencv-python
 RPi.GPIO
 picamera2
+customtkinter
+numpy==1.24.2
