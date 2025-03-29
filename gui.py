@@ -12,12 +12,12 @@ class GUI(gui.CTk):
         self.geometry("640x720")
         self.locked = False
         
-        self.trt_state = gui.StringVar(value='on')
+        self.cam_state = gui.StringVar(value='on')
         self.us_state = gui.StringVar(value='on')
         self.meca_state = gui.StringVar(value='off')
         
-        self.trt_checkbox = gui.CTkCheckBox(self, text="Image acquistion+analysis", variable=self.trt_state, onvalue='on', offvalue='off')
-        self.trt_checkbox.grid(row=0, column=0, padx=20, pady=(10,20), sticky='w')
+        self.cam_checkbox = gui.CTkCheckBox(self, text="Image acquistion+analysis", variable=self.cam_state, onvalue='on', offvalue='off')
+        self.cam_checkbox.grid(row=0, column=0, padx=20, pady=(10,20), sticky='w')
         self.us_checkbox = gui.CTkCheckBox(self, text="Ultrasound proximity sensor", variable=self.us_state, onvalue='on', offvalue='off')
         self.us_checkbox.grid(row=1, column=0, padx=20, pady=(0,20), sticky='w')
         self.meca_checkbox = gui.CTkCheckBox(self, text="Movement of the vehicle", variable=self.meca_state, onvalue='on', offvalue='off')
@@ -37,7 +37,7 @@ class GUI(gui.CTk):
         
     def lock(self):
         self.locked = True
-        self.trt_checkbox.configure(state='disabled')
+        self.cam_checkbox.configure(state='disabled')
         self.us_checkbox.configure(state='disabled')
         self.meca_checkbox.configure(state='disabled')
         self.trig_spin.configure(state='disabled')
@@ -47,7 +47,7 @@ class GUI(gui.CTk):
         
     def unlock(self):
         self.locked = False
-        self.trt_checkbox.configure(state='normal')
+        self.cam_checkbox.configure(state='normal')
         self.us_checkbox.configure(state='normal')
         self.meca_checkbox.configure(state='normal')
         self.trig_spin.configure(state='normal')

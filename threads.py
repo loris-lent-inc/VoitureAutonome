@@ -7,24 +7,32 @@ from ultrason import ultrason
 
 
 class Toolbox:
-    def __init__(self, DIR_PIN, PWM_PIN, TRIGGER_PIN, ECHO_PIN):
-        self.ctrl = controle_vehicule(DIR_PIN, PWM_PIN)
-        self.trt = traitement_image()
-        self.us = ultrason(TRIGGER_PIN, ECHO_PIN)
-        
-        self.ctrl_thread = None
-        self.trt_thread = None
-        self.us_thread = None
+    def __init__(self):
+        self.meca = None
+        self.cam = None
+        self.us = None
         self.watchdog = None
         
         self.isFinished = False
 
     def finish(self):
         if not self.isFinished:
-            self.ctrl.finish()
-            self.trt.finish()
-            self.us.finish()
+            self.meca.finish()
+            self.meca.finish()
+            self.meca.finish()
             self.isFinished = True
+            
+    def last_distance(self):
+        return self.us.tool.last_mesure
+    
+    def last_image(self):
+        return self.cam.tool.last_image
+    
+    def last_heading(self):
+        return self.cam.tool.curr_steering_angle
+    
+    def last_fps(self):
+        return self.cam.tool.last_fps
 
 class toolThread(threading.Thread, ABC):
     def __init__(self, tool):
@@ -80,9 +88,9 @@ class UltrasonThread(toolThread):
         self.finish()
 
 class WatchdogThread(threading.Thread):
-    def __init__(self, timeout=10):
+    def __init__(self, toolbox, timeout=10):
         threading.Thread.__init__(self)
-        self.threads = []
+        self.threads = [toolbox.meca, toolbox.cam, toolbox.us]
         self.running = True
         self.timeout = timeout
 

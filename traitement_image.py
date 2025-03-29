@@ -20,7 +20,8 @@ class traitement_image:
         self.total_time = 0
         self.curr_steering_angle = stabilized_steering_angle = 90
         self.exit = False
-        self.current_results = ([], 0, 0)        
+        self.last_image = []
+        self.last_fps = 0
 
     def detect_edges(self, frame, showDetec=True):  # Créé une nouvelle image avec les bordure des objets bleu
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # On transforme le format BRG en HSV pour éviter les différentes teintes de bleu due à la luminosité
@@ -274,13 +275,15 @@ class traitement_image:
                 self.total_time = 0
 
             # Affichage des résultats
-            self.current_results = (heading_image, fps, self.curr_steering_angle)
-            #print(f"FPS = {fps:.2f} ; Angle = {self.curr_steering_angle:.0f}°")
-            return self.current_results
+            self.last_image = heading_image
+            self.last_fps = fps
+
+            return
+        
         except Exception as e:
             print("Error: %s", repr(e))
             self.finish()
-            return None, 0, 90
+            return
 
     def finish(self):
         self.picam.stop()
