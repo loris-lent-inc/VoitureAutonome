@@ -9,7 +9,8 @@ def setup_and_start():
     
     toolbox.watchdog = WatchdogThread(toolbox)
     if my_app.meca_state.get() == 'on':
-        toolbox.meca = ControlThread(controle_vehicule(int(my_app.dir_spin.var.get()), int(my_app.pwm_spin.var.get())))
+        toolbox.meca = AccelerationThread(controle_accel(int(my_app.dir_spin.var.get()), int(my_app.pwm_spin.var.get())))
+        toolbox.dir = DirectionThread(controle_dir(int(my_app.str_spin.var.get())))
     if my_app.cam_state.get() == 'on':
         toolbox.cam = ImageProcessingThread(traitement_image())
     if  my_app.us_state.get() == 'on':

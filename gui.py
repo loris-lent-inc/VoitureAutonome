@@ -27,13 +27,15 @@ class GUI(gui.CTk):
         self.trig_spin.grid(row=3, column=0, columnspan=3, padx=20, pady=20)
         self.echo_spin = Spinbox(self, "Echo PIN :", ECHO_PIN, 0, 40)
         self.echo_spin.grid(row=4, column=0, columnspan=3, padx=20, pady=20)
-        self.dir_spin = Spinbox(self, "Direction PIN :", DIR_PIN, 0, 40)
+        self.dir_spin = Spinbox(self, "Forward/Backward PIN :", DIR_PIN, 0, 40)
         self.dir_spin.grid(row=5, column=0, columnspan=3, padx=20, pady=20)
         self.pwm_spin = Spinbox(self, "Throttle PIN :", PWM_PIN, 0, 40)
         self.pwm_spin.grid(row=6, column=0, columnspan=3, padx=20, pady=20)
+        self.str_spin = Spinbox(self, "Steering PIN :", PWM_PIN, 0, 40)
+        self.str_spin.grid(row=7, column=0, columnspan=3, padx=20, pady=20)
         
         self.run_button = gui.CTkButton(self, text="Run!", command='')
-        self.run_button.grid(row=7, column=1, padx=20, pady=20)
+        self.run_button.grid(row=8, column=1, padx=20, pady=20)
         
     def lock(self):
         self.locked = True
@@ -44,6 +46,7 @@ class GUI(gui.CTk):
         self.echo_spin.configure(state='disabled')
         self.dir_spin.configure(state='disabled')
         self.pwm_spin.configure(state='disabled')
+        self.str_spin.configure(state='disabled')
         
     def unlock(self):
         self.locked = False
@@ -54,6 +57,7 @@ class GUI(gui.CTk):
         self.echo_spin.configure(state='normal')
         self.dir_spin.configure(state='normal')
         self.pwm_spin.configure(state='normal')
+        self.str_spin.configure(state='normal')
     
     def toogle_lock(self):
         if(self.locked):

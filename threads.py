@@ -1,7 +1,8 @@
 import threading
 import time
 from abc import ABC, abstractmethod
-from controle_vehicule import controle_vehicule
+from controle_accel import controle_accel
+from controle_dir import controle_dir
 from traitement_image import traitement_image
 from ultrason import ultrason
 
@@ -10,6 +11,7 @@ class Toolbox:
     def __init__(self):
         self.meca = None
         self.cam = None
+        self.dir = None
         self.us = None
         self.watchdog = None
         
@@ -18,8 +20,9 @@ class Toolbox:
     def finish(self):
         if not self.isFinished:
             self.meca.finish()
-            self.meca.finish()
-            self.meca.finish()
+            self.cam.finish()
+            self.dir.finish()
+            self.us.finish()
             self.isFinished = True
             
     def last_distance(self):
@@ -33,6 +36,11 @@ class Toolbox:
     
     def last_fps(self):
         return self.cam.tool.last_fps
+    
+    def set_steering(self, angle):
+        self.dir.next_steering = angle
+        self.dir.needs_steering = True
+    
 
 class toolThread(threading.Thread, ABC):
     def __init__(self, tool):
@@ -47,12 +55,13 @@ class toolThread(threading.Thread, ABC):
     
     def heartbeat(self):
         self.last_heartbeat = time.time()
+
         
     @abstractmethod
     def run(self):
         pass
 
-class ControlThread(toolThread):
+class AccelerationThread(toolThread):
     def run(self):
         self.speed = 1
         self.accel = 1
@@ -63,6 +72,25 @@ class ControlThread(toolThread):
                     self.accel *= -1
                 self.speed += self.accel
                 self.tool.setAccel(self.speed)
+                self.heartbeat()
+                time.sleep(0.1)
+            except KeyboardInterrupt:
+                self.running = False
+        
+        self.finish()
+
+class DirectionThread(toolThread):
+    def __init__(self, tool):
+        self.needs_steering = True
+        self.next_steering = 90
+
+    def run(self):
+        while self.running:
+            try:
+                if(self.needs_steering):
+                    self.tool.setSteering(self.next_steering)
+                    self.needs_steering = False
+                
                 self.heartbeat()
                 time.sleep(0.1)
             except KeyboardInterrupt:

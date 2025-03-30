@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import  time
 
 
-class controle_vehicule():
+class controle_accel():
     def __init__(self, DIR_pin, PWM_pin):
         self.dir_pin = DIR_pin
         self.pwm_pin = PWM_pin
@@ -39,7 +39,7 @@ class controle_vehicule():
 
 
 if __name__ == "__main__":
-    control = controle_vehicule()
+    control = controle_accel()
     try:
         while True:
             for i in range(0, 101, 1):
