@@ -1,8 +1,8 @@
 import threading
 import time
 from abc import ABC, abstractmethod
-from controle_accel import controle_accel
-from controle_dir import controle_dir
+#from controle_accel import controle_accel
+#from servo_controller import servo_controller
 from traitement_image import traitement_image
 from ultrason import ultrason
 
@@ -45,19 +45,17 @@ class Toolbox:
         self.meca.next_speed = speed
     
     def set_dir(self, dir):
-        self.meca.tool.setDir(dir)
+        self.meca.setDir(dir)
     
 
 class toolThread(threading.Thread, ABC):
-    def __init__(self, tool):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self.tool = tool
         self.running = True
         self.heartbeat()
 
     def finish(self):
         self.running = False
-        self.tool.finish()
     
     def heartbeat(self):
         self.last_heartbeat = time.time()
@@ -66,39 +64,6 @@ class toolThread(threading.Thread, ABC):
     @abstractmethod
     def run(self):
         pass
-
-class AccelerationThread(toolThread):
-    def __init__(self, tool):
-        toolThread.__init__(self, tool)
-        self.next_speed = 0
-        
-    def run(self):
-        while self.running:
-            try:
-                self.tool.setAccel(self.next_speed)
-            except KeyboardInterrupt:
-                self.running = False
-        
-        self.finish()
-
-class DirectionThread(toolThread):
-    def __init__(self, tool):
-        self.needs_steering = True
-        self.next_steering = 90
-
-    def run(self):
-        while self.running:
-            try:
-                if(self.needs_steering):
-                    self.tool.setSteering(self.next_steering)
-                    self.needs_steering = False
-                
-                self.heartbeat()
-                time.sleep(0.1)
-            except KeyboardInterrupt:
-                self.running = False
-        
-        self.finish()
 
 class ImageProcessingThread(toolThread):
     def run(self):

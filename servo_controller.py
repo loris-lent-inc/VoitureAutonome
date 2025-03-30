@@ -1,10 +1,11 @@
-import RPi.GPIO as GPIO
+import pigpio
+from threads import toolThread
 import time
 
-class controle_dir():
+class servo_controller(toolThread):
     """
     Classe pour contrôler un servo-moteur connecté au Raspberry Pi
-    en utilisant la modulation de largeur d'impulsion (PWM).
+    en utilisant la bibliothèque pigpio.
     """
     
     def __init__(self, SRV_PIN, freq=50, angle_min=0, angle_max=180):
@@ -12,46 +13,48 @@ class controle_dir():
         Initialiser le servo-moteur.
         
         Args:
-            pin (int): Numéro de la broche GPIO à laquelle le servo est connecté
+            SRV_PIN (int): Numéro de la broche GPIO à laquelle le servo est connecté
             freq (int): Fréquence du PWM en Hz (50Hz par défaut)
             angle_min (int): Angle minimum du servo en degrés
             angle_max (int): Angle maximum du servo en degrés
         """
+        toolThread.__init__(self)
         self.pin = SRV_PIN
         self.freq = freq
         self.angle_min = angle_min
         self.angle_max = angle_max
+        self.needs_steering = True
+        self.next_steering = 90
         
-        # Configuration du GPIO
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin, GPIO.OUT)
+        # Initialisation de pigpio
+        self.pi = pigpio.pi()
+        if not self.pi.connected:
+            raise RuntimeError("Impossible de se connecter au daemon pigpio")
         
-        # Création de l'objet PWM
-        self.pwm = GPIO.PWM(self.pin, self.freq)
-        self.pwm.start(0)  # Démarrage avec un rapport cyclique de 0%
+        # Configuration de la fréquence PWM (pigpio utilise une période en μs)
+        self.period = 1000000 // self.freq  # Conversion Hz en période μs
         
         # Position actuelle
         self.angle_courant = None
     
-    def angle_vers_duty_cycle(self, angle):
+    def angle_vers_pulse_width(self, angle):
         """
-        Convertir un angle en rapport cyclique (duty cycle).
-        En général, pour un servo standard :
-        - 2.5% correspond à 0°
-        - 12.5% correspond à 180°
+        Convertir un angle en largeur d'impulsion (en μs).
+        Pour la plupart des servos standard :
+        - 500μs correspond à 0°
+        - 2500μs correspond à 180°
         
         Args:
             angle (float): Angle en degrés
             
         Returns:
-            float: Rapport cyclique correspondant
+            int: Largeur d'impulsion en μs
         """
         # Limitation de l'angle à l'intervalle [angle_min, angle_max]
         angle = max(self.angle_min, min(self.angle_max, angle))
         
-        # Conversion de l'angle en rapport cyclique
-        # La formule peut varier selon le servo-moteur
-        return 2.5 + (angle / 180.0) * 10.0
+        # Conversion de l'angle en largeur d'impulsion
+        return int(500 + (angle / 180.0) * 2000)
     
     def tourner(self, angle):
         """
@@ -60,8 +63,8 @@ class controle_dir():
         Args:
             angle (float): Angle cible en degrés
         """
-        duty_cycle = self.angle_vers_duty_cycle(angle)
-        self.pwm.ChangeDutyCycle(duty_cycle)
+        pulse_width = self.angle_vers_pulse_width(angle)
+        self.pi.set_servo_pulsewidth(self.pin, pulse_width)
         self.angle_courant = angle
         time.sleep(0.3)  # Attendre que le servo atteigne la position
     
@@ -84,22 +87,37 @@ class controle_dir():
             self.tourner(angle)
             time.sleep(temps_attente)
     
+    def run(self):
+        while self.running:
+            try:
+                if(self.needs_steering):
+                    self.tourner(self.next_steering)
+                    self.needs_steering = False
+                
+                self.heartbeat()
+                time.sleep(0.1)
+            except KeyboardInterrupt:
+                self.running = False
+        
+        self.finish()
+
     def finish(self):
         """
         Destructeur pour s'assurer que les ressources sont libérées.
         """
         try:
-            self.pwm.stop()
-            GPIO.cleanup(self.pin)
+            # Arrêter le servo en mettant la largeur d'impulsion à 0
+            self.pi.set_servo_pulsewidth(self.pin, 0)
+            self.pi.stop()
         except:
             pass  # Ignorer les erreurs lors du nettoyage
-
+  
 
 # Exemple d'utilisation
 if __name__ == "__main__":
     try:
         # Créer un objet servo sur la broche GPIO 18
-        servo = controle_dir(pin=18)
+        servo = servo_controller(SRV_PIN=18)
         
         # Tourner à différents angles
         print("Tournage à 0°")
@@ -119,4 +137,5 @@ if __name__ == "__main__":
     
     finally:
         # Nettoyage
-        servo.finish()
+        if 'servo' in locals():
+            servo.finish()

@@ -1,12 +1,15 @@
 import RPi.GPIO as GPIO
 import pigpio
+from threads import toolThread
 import  time
 
-class controle_accel():
+class acceleration_controller(toolThread):
     def __init__(self, DIR_pin, PWM_pin):
+        toolThread.__init__(self, None)
         self.dir_pin = DIR_pin
         self.pwm_pin = PWM_pin
-        
+        self.next_speed = 0
+
         GPIO.setmode(GPIO.BCM)
         #GPIO.setup(self.pwm_pin, GPIO.OUT)
         GPIO.setup(self.dir_pin, GPIO.OUT)
@@ -19,14 +22,16 @@ class controle_accel():
         #self.pwm.start(self.pwmValue)
         self.pwm = pigpio.pi()
 
+    def set_PWM(self, value):
+        self.pwm.set_PWM_dutycycle(self.pwm_pin, value)
+        #self.pwm.ChangeDutyCycle(value)
+    
     def setAccel(self, value):
         #if(self.pwmValue < 3):
             #self.pwm.ChangeDutyCycle(100)
             #time.sleep(0.02)
-        
-        self.pwmValue = value
-        #self.pwm.ChangeDutyCycle(self.pwmValue)
-        self.pwm.set_PWM_dutycycle(self.pwm_pin, value)
+
+        self.set_PWM(value)
 
     def setDir(self, value):
         self.dir = value
@@ -35,14 +40,24 @@ class controle_accel():
     def changeDir(self):
         self.setDir(not self.dir)
 
+    def run(self):
+        while self.running:
+            try:
+                self.tool.setAccel(self.next_speed)
+            except KeyboardInterrupt:
+                self.running = False
+        
+        self.finish()
+    
     def finish(self):
         self.pwm.ChangeDutyCycle(0)
         self.pwm.stop()
+        self.running = False
         GPIO.cleanup()
 
 
 if __name__ == "__main__":
-    control = controle_accel(16, 13)
+    control = acceleration_controller(16, 13)
     try:
         while True:
             for i in range(0, 101, 1):
