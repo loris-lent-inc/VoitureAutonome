@@ -41,6 +41,12 @@ class Toolbox:
         self.dir.next_steering = angle
         self.dir.needs_steering = True
     
+    def set_accel(self, speed):
+        self.meca.next_speed = speed
+    
+    def set_dir(self, dir):
+        self.meca.tool.setDir(dir)
+    
 
 class toolThread(threading.Thread, ABC):
     def __init__(self, tool):
@@ -62,18 +68,14 @@ class toolThread(threading.Thread, ABC):
         pass
 
 class AccelerationThread(toolThread):
-    def run(self):
-        self.speed = 1
-        self.accel = 1
+    def __init__(self, tool):
+        toolThread.__init__(self, tool)
+        self.next_speed = 0
         
+    def run(self):
         while self.running:
             try:
-                if self.speed > 99 or self.speed < 1:
-                    self.accel *= -1
-                self.speed += self.accel
-                self.tool.setAccel(self.speed)
-                self.heartbeat()
-                time.sleep(0.1)
+                self.tool.setAccel(self.next_speed)
             except KeyboardInterrupt:
                 self.running = False
         

@@ -2,19 +2,20 @@ from spinbox import gui, Spinbox
 
 TRIGGER_PIN = 6
 ECHO_PIN = 5
-DIR_PIN = 18
-PWM_PIN = 19
+STR_PIN = 12
+DIR_PIN = 16
+PWM_PIN = 13
 
 class GUI(gui.CTk):
     def __init__(self):
         super().__init__()
         self.title("Smart Haul")
-        self.geometry("640x720")
+        self.geometry("500x820")
         self.locked = False
         
         self.cam_state = gui.StringVar(value='on')
-        self.us_state = gui.StringVar(value='on')
-        self.meca_state = gui.StringVar(value='off')
+        self.us_state = gui.StringVar(value='off')
+        self.meca_state = gui.StringVar(value='on')
         
         self.cam_checkbox = gui.CTkCheckBox(self, text="Image acquistion+analysis", variable=self.cam_state, onvalue='on', offvalue='off')
         self.cam_checkbox.grid(row=0, column=0, padx=20, pady=(10,20), sticky='w')
@@ -31,7 +32,7 @@ class GUI(gui.CTk):
         self.dir_spin.grid(row=5, column=0, columnspan=3, padx=20, pady=20)
         self.pwm_spin = Spinbox(self, "Throttle PIN :", PWM_PIN, 0, 40)
         self.pwm_spin.grid(row=6, column=0, columnspan=3, padx=20, pady=20)
-        self.str_spin = Spinbox(self, "Steering PIN :", PWM_PIN, 0, 40)
+        self.str_spin = Spinbox(self, "Steering PIN :", STR_PIN, 0, 40)
         self.str_spin.grid(row=7, column=0, columnspan=3, padx=20, pady=20)
         
         self.run_button = gui.CTkButton(self, text="Run!", command='')

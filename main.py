@@ -18,7 +18,7 @@ def setup_and_start():
     
     print(f"MECA:{my_app.meca_state.get()} ; CAM: {my_app.cam_state.get()} ; US: {my_app.us_state.get()}")
     print("Finished setting up threads and components")
-    
+
     main_loop(toolbox)
     return toolbox
 
@@ -41,6 +41,7 @@ def main_loop(toolbox):
     image = []
     fps = 0
     angle = 0
+    speed = accel = 1
     while keep_going:
         # mesure:
         if my_app.us_state.get() == 'on':
@@ -56,17 +57,17 @@ def main_loop(toolbox):
         # controle :
         if my_app.meca_state.get() == 'on':
             try:
-                if speed > 99 or speed < 1:
+                if speed > 254 or speed < 1:
                     accel *= -1
-                speed += accel
-                toolbox.ctrl.setAccel(speed)
+                speed+=accel
+                toolbox.set_accel(speed)
             except KeyboardInterrupt:
                 k_interrupt = True
         
-        print(f"Distance: {distance:.1f}cm;\tAngle: {angle:.1f};\tFPS: {fps:.1f}")
+        #print(f"Distance: {distance:.1f}cm;\tAngle: {angle:.1f};\tFPS: {fps:.1f};\tSpeed: {speed}")
         
         # sleep:
-        time.sleep(0.5)
+        time.sleep(0.001)
 
         # conditionnal exit:
         if k_interrupt:
