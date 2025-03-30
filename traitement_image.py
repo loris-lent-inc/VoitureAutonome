@@ -9,9 +9,11 @@ import time
 import logging
 import math
 import random
+from threads import toolThread
 
-class traitement_image:
+class traitement_image(toolThread):
     def __init__(self, size_tuple = (640, 360)):
+        toolThread.__init__(self)
         self.picam = Picamera2()
         config = self.picam.create_still_configuration({"size": size_tuple})
         self.picam.configure(config)
@@ -258,8 +260,9 @@ class traitement_image:
                 self.curr_steering_angle = stabilized_steering_angle
 
             # Génération de l'image finale
-            heading_image = self.display_heading_line(frame, self.curr_steering_angle, (255,255,255))
-
+            #											self.edges ou frame
+            heading_image = self.display_heading_line(self.edges, self.curr_steering_angle, (255,255,255))
+            
             # Mesures de performance
             self.end_time = time.perf_counter()
             
@@ -277,7 +280,7 @@ class traitement_image:
             # Affichage des résultats
             self.last_image = heading_image
             self.last_fps = fps
-
+            
             return
         
         except Exception as e:
@@ -285,6 +288,13 @@ class traitement_image:
             self.finish()
             return
 
+    def run(self):
+        while self.running:
+            self.test_video_picam()
+            self.heartbeat()
+            time.sleep(0.1) # pas de sleep car déjà lent
+        self.finish()
+    
     def finish(self):
         self.picam.stop()
         self.exit = True

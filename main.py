@@ -1,22 +1,24 @@
 #!/usr/bin/env venv/bin/python
 from gui import GUI
-from threads import Toolbox, toolThread, WatchdogThread, DirectionThread, UltrasonThread, ImageProcessingThread
+from threads import Toolbox, Watchdog
 from acceleration_controller import *
 from servo_controller import *
+from traitement_image import *
+from ultrason import *
 import cv2
 
 def setup_and_start():
     my_app.lock()
     toolbox = Toolbox()
     
-    toolbox.watchdog = WatchdogThread(toolbox)
+    toolbox.watchdog = Watchdog(toolbox)
     if my_app.meca_state.get() == 'on':
         toolbox.meca = acceleration_controller(int(my_app.dir_spin.var.get()), int(my_app.pwm_spin.var.get()))
-        toolbox.dir = servo_controller(int(my_app.str_spin.var.get()))
+        toolbox.dir = servo_controller(int(my_app.str_spin.var.get()), angle_min=60, angle_max=140)
     if my_app.cam_state.get() == 'on':
-        toolbox.cam = ImageProcessingThread(traitement_image())
+        toolbox.cam = traitement_image()
     if  my_app.us_state.get() == 'on':
-        toolbox.us = UltrasonThread(ultrason(int(my_app.trig_spin.var.get()), int(my_app.echo_spin.var.get())))
+        toolbox.us = ultrason(int(my_app.trig_spin.var.get()), int(my_app.echo_spin.var.get()))
     
     print(f"MECA:{my_app.meca_state.get()} ; CAM: {my_app.cam_state.get()} ; US: {my_app.us_state.get()}")
     print("Finished setting up threads and components")
@@ -28,6 +30,7 @@ def main_loop(toolbox):
     # Start threads
     if my_app.meca_state.get() == 'on':
         toolbox.meca.start()
+        toolbox.dir.start()
     if my_app.cam_state.get() == 'on':
         toolbox.cam.start()
     if my_app.us_state.get() == 'on':
@@ -43,7 +46,8 @@ def main_loop(toolbox):
     image = []
     fps = 0
     angle = 0
-    speed = accel = 1
+    speed = accel = 5
+    start = time.time()
     while keep_going:
         # mesure:
         if my_app.us_state.get() == 'on':
@@ -59,17 +63,19 @@ def main_loop(toolbox):
         # controle :
         if my_app.meca_state.get() == 'on':
             try:
-                if speed > 254 or speed < 1:
-                    accel *= -1
-                speed+=accel
-                toolbox.set_accel(speed)
+                if(time.time() - start) < 5:
+                    toolbox.set_accel(100)
+                    toolbox.set_steering(60)
+                else:
+                    toolbox.set_accel(steering(angle))
+                    toolbox.set_steering(110)
             except KeyboardInterrupt:
                 k_interrupt = True
         
-        #print(f"Distance: {distance:.1f}cm;\tAngle: {angle:.1f};\tFPS: {fps:.1f};\tSpeed: {speed}")
+        print(f"Distance: {distance:.1f}cm;\tAngle: {angle:.1f};\tFPS: {fps:.1f};\tSpeed: {speed}")
         
         # sleep:
-        time.sleep(0.001)
+        time.sleep(0.5)
 
         # conditionnal exit:
         if k_interrupt:
@@ -77,6 +83,13 @@ def main_loop(toolbox):
             keep_going = False
     
     return True
+
+def steering(angle):
+    vis_min = -90
+    vis_max = 90
+    steer_min = 60
+    steer_max = 150
+    return steer_min + ((steer_max-steer_min) * (angle - vis_min) / (vis_max - vis_min))
 
 def affiche_image(image = [], title = "Detection d'objets"):
     if len(image) == 0:

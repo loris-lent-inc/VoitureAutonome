@@ -3,8 +3,8 @@ import time
 from abc import ABC, abstractmethod
 #from controle_accel import controle_accel
 #from servo_controller import servo_controller
-from traitement_image import traitement_image
-from ultrason import ultrason
+#from traitement_image import traitement_image
+#from ultrason import ultrason
 
 
 class Toolbox:
@@ -26,16 +26,16 @@ class Toolbox:
             self.isFinished = True
             
     def last_distance(self):
-        return self.us.tool.last_mesure
+        return self.us.last_mesure
     
     def last_image(self):
-        return self.cam.tool.last_image
+        return self.cam.last_image
     
     def last_heading(self):
-        return self.cam.tool.curr_steering_angle
+        return self.cam.curr_steering_angle
     
     def last_fps(self):
-        return self.cam.tool.last_fps
+        return self.cam.last_fps
     
     def set_steering(self, angle):
         self.dir.next_steering = angle
@@ -65,24 +65,7 @@ class toolThread(threading.Thread, ABC):
     def run(self):
         pass
 
-class ImageProcessingThread(toolThread):
-    def run(self):
-        while self.running:
-            self.tool.test_video_picam()
-            self.heartbeat()
-            time.sleep(0.1) # pas de sleep car déjà lent
-        self.finish()
-
-class UltrasonThread(toolThread):
-    def run(self):
-        while self.running:
-            self.tool.mesurer_distance()
-            self.heartbeat()
-            time.sleep(0.5)
-        
-        self.finish()
-
-class WatchdogThread(threading.Thread):
+class Watchdog(threading.Thread):
     def __init__(self, toolbox, timeout=10):
         threading.Thread.__init__(self)
         self.threads = [toolbox.meca, toolbox.cam, toolbox.us]

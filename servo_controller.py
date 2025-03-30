@@ -90,9 +90,9 @@ class servo_controller(toolThread):
     def run(self):
         while self.running:
             try:
-                if(self.needs_steering):
-                    self.tourner(self.next_steering)
-                    self.needs_steering = False
+                #if(self.needs_steering):
+                self.tourner(self.next_steering)
+                    #self.needs_steering = False
                 
                 self.heartbeat()
                 time.sleep(0.1)
@@ -117,21 +117,25 @@ class servo_controller(toolThread):
 if __name__ == "__main__":
     try:
         # Créer un objet servo sur la broche GPIO 18
-        servo = servo_controller(SRV_PIN=18)
+        servo = servo_controller(SRV_PIN=12, angle_min=60, angle_max=140)
         
         # Tourner à différents angles
-        print("Tournage à 0°")
-        servo.tourner(0)
-        time.sleep(1)
+#         print("Tournage à 0°")
+#         servo.tourner(0)
+#         time.sleep(1)
+#         
+#         print("Tournage à 90°")
+#         servo.tourner(90)
+#         time.sleep(1)
+#         
+#         print("Tournage à 180°")
+#         servo.tourner(180)
+#         time.sleep(1)
         
-        print("Tournage à 90°")
-        servo.tourner(90)
+        servo.balayer(140, 60, 10, 1)
+        print("Tournage à 100°")
+        servo.tourner(105)
         time.sleep(1)
-        
-        print("Tournage à 180°")
-        servo.tourner(180)
-        time.sleep(1)
-        
     except KeyboardInterrupt:
         print("Programme interrompu par l'utilisateur")
     

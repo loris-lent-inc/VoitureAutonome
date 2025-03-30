@@ -5,7 +5,7 @@ import  time
 
 class acceleration_controller(toolThread):
     def __init__(self, DIR_pin, PWM_pin):
-        toolThread.__init__(self, None)
+        toolThread.__init__(self)
         self.dir_pin = DIR_pin
         self.pwm_pin = PWM_pin
         self.next_speed = 0
@@ -27,9 +27,9 @@ class acceleration_controller(toolThread):
         #self.pwm.ChangeDutyCycle(value)
     
     def setAccel(self, value):
-        #if(self.pwmValue < 3):
-            #self.pwm.ChangeDutyCycle(100)
-            #time.sleep(0.02)
+        if(value < 3 and value > 0):
+            self.pwm.set_PWM(255)
+            time.sleep(0.02)
 
         self.set_PWM(value)
 
@@ -43,7 +43,7 @@ class acceleration_controller(toolThread):
     def run(self):
         while self.running:
             try:
-                self.tool.setAccel(self.next_speed)
+                self.setAccel(self.next_speed)
             except KeyboardInterrupt:
                 self.running = False
         

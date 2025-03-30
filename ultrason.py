@@ -1,9 +1,11 @@
 import RPi.GPIO as GPIO
 import time
+from threads import toolThread
 
-class ultrason:
+class ultrason(toolThread):
     # Configuration des broches GPIO
     def __init__(self, tPin, ePin):
+        toolThread.__init__(self)
         self.trigger_pin = tPin
         self.echo_pin = ePin
         GPIO.setmode(GPIO.BCM)  # Utilise la numérotation BCM
@@ -38,10 +40,16 @@ class ultrason:
         self.last_mesure = distance
         return distance
     
+    def run(self):
+        while self.running:
+            self.mesurer_distance()
+            self.heartbeat()
+            time.sleep(0.5)
+        
+        self.finish()
+        
     def finish(self):
         GPIO.cleanup()  # Réinitialise les GPIO
-
-
 
 if __name__ == "__main__":
     us = ultrason(6, 5)
