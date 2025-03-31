@@ -2,6 +2,16 @@ import pigpio
 from threads import toolThread
 import time
 
+def set_steering(angle):
+        vis_min = 0.0
+        vis_max = 180.0
+        steer_min = 60.0
+        steer_max = 150.0
+        steer = steer_min + (float(steer_max-steer_min) * float(angle - vis_min) / float(vis_max - vis_min))
+        print(f"Steering to {steer}°")
+        return steer
+
+
 class servo_controller(toolThread):
     """
     Classe pour contrôler un servo-moteur connecté au Raspberry Pi
@@ -23,7 +33,6 @@ class servo_controller(toolThread):
         self.freq = freq
         self.angle_min = angle_min
         self.angle_max = angle_max
-        self.needs_steering = True
         self.next_steering = 90
         
         # Initialisation de pigpio
@@ -67,6 +76,7 @@ class servo_controller(toolThread):
         self.pi.set_servo_pulsewidth(self.pin, pulse_width)
         self.angle_courant = angle
         time.sleep(0.3)  # Attendre que le servo atteigne la position
+        print(f"angle:{angle}")
     
     def balayer(self, debut, fin, pas=10, temps_attente=0.2):
         """
@@ -86,12 +96,13 @@ class servo_controller(toolThread):
         for angle in angles:
             self.tourner(angle)
             time.sleep(temps_attente)
-    
+
     def run(self):
         while self.running:
             try:
                 #if(self.needs_steering):
-                self.tourner(self.next_steering)
+                angle = set_steering(self.next_steering)
+                self.tourner(angle)
                     #self.needs_steering = False
                 
                 self.heartbeat()
@@ -117,7 +128,7 @@ class servo_controller(toolThread):
 if __name__ == "__main__":
     try:
         # Créer un objet servo sur la broche GPIO 18
-        servo = servo_controller(SRV_PIN=12, angle_min=60, angle_max=140)
+        servo = servo_controller(SRV_PIN=12, freq=200, angle_min=60, angle_max=140)
         
         # Tourner à différents angles
 #         print("Tournage à 0°")
@@ -131,11 +142,20 @@ if __name__ == "__main__":
 #         print("Tournage à 180°")
 #         servo.tourner(180)
 #         time.sleep(1)
-        
-        servo.balayer(140, 60, 10, 1)
+        #servo.balayer(105, 145, 5, 1)
+        #servo.balayer(105, 60, 5, 1)
         print("Tournage à 100°")
         servo.tourner(105)
         time.sleep(1)
+        servo.tourner(70)
+        time.sleep(1)
+        servo.tourner(105)
+        time.sleep(1)
+        servo.tourner(140)
+        time.sleep(1)
+        servo.tourner(105)
+        time.sleep(1)
+        
     except KeyboardInterrupt:
         print("Programme interrompu par l'utilisateur")
     

@@ -17,20 +17,20 @@ class acceleration_controller(toolThread):
         self.dir = True
         self.setDir(self.dir)
 
-        #self.pwmValue = 0
+        self.pwmValue = 0
         #self.pwm = GPIO.PWM(PWM_pin, 1000)
         #self.pwm.start(self.pwmValue)
         self.pwm = pigpio.pi()
 
     def set_PWM(self, value):
+        self.pwmValue = value
         self.pwm.set_PWM_dutycycle(self.pwm_pin, value)
         #self.pwm.ChangeDutyCycle(value)
     
     def setAccel(self, value):
-        if(value < 3 and value > 0):
-            self.pwm.set_PWM(255)
+        if(self.pwmValue < 1 and value < 5 and value > 0):
+            self.set_PWM(255)
             time.sleep(0.02)
-
         self.set_PWM(value)
 
     def setDir(self, value):

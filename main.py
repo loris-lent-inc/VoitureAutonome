@@ -65,10 +65,10 @@ def main_loop(toolbox):
             try:
                 if(time.time() - start) < 5:
                     toolbox.set_accel(100)
-                    toolbox.set_steering(60)
+                    toolbox.set_steering(angle)
                 else:
-                    toolbox.set_accel(steering(angle))
-                    toolbox.set_steering(110)
+                    toolbox.set_accel(0)
+                    toolbox.set_steering(angle)
             except KeyboardInterrupt:
                 k_interrupt = True
         
@@ -83,13 +83,6 @@ def main_loop(toolbox):
             keep_going = False
     
     return True
-
-def steering(angle):
-    vis_min = -90
-    vis_max = 90
-    steer_min = 60
-    steer_max = 150
-    return steer_min + ((steer_max-steer_min) * (angle - vis_min) / (vis_max - vis_min))
 
 def affiche_image(image = [], title = "Detection d'objets"):
     if len(image) == 0:

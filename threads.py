@@ -39,7 +39,6 @@ class Toolbox:
     
     def set_steering(self, angle):
         self.dir.next_steering = angle
-        self.dir.needs_steering = True
     
     def set_accel(self, speed):
         self.meca.next_speed = speed

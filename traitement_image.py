@@ -51,10 +51,10 @@ class traitement_image(toolThread):
 
         # On ne garde que le bas de l'image
         polygon = np.array([[
-            (0, height * 1 / 2),
-            (width, height * 1 / 2),
-            (width, height),
-            (0, height),
+            (0, 0),
+            (width, 0),
+            (width, height/2),
+            (0, height/2),
         ]], np.int32)
 
         cv2.fillPoly(mask, polygon, 255)
@@ -135,7 +135,7 @@ class traitement_image(toolThread):
     def detect_lane(self, frame, showDetec=True):  # Fonction qui résume les précédentes
 
         self.edges = self.detect_edges(frame, showDetec)
-        cropped_edges = self.region_of_interest(self.edges)
+        self.edges = cropped_edges = self.region_of_interest(self.edges)
         line_segments = self.detect_line_segments(cropped_edges)
         lane_lines = self.average_slope_intercept(frame, line_segments)
         return lane_lines
