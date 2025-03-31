@@ -44,7 +44,7 @@ class ultrason(toolThread):
         while self.running:
             self.mesurer_distance()
             self.heartbeat()
-            time.sleep(0.5)
+            time.sleep(1)
         
         self.finish()
         

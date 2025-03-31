@@ -14,7 +14,7 @@ class GUI(gui.CTk):
         self.locked = False
         
         self.cam_state = gui.StringVar(value='on')
-        self.us_state = gui.StringVar(value='off')
+        self.us_state = gui.StringVar(value='on')
         self.meca_state = gui.StringVar(value='on')
         
         self.cam_checkbox = gui.CTkCheckBox(self, text="Image acquistion+analysis", variable=self.cam_state, onvalue='on', offvalue='off')

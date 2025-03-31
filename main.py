@@ -71,7 +71,7 @@ def main_loop(toolbox, meca_state='on', cam_state='on', us_state='on'):
     # Set variables
     keep_going = True
     k_interrupt = False
-    distance = 0
+    distance = 50
     image = []
     fps = 0
     angle = 0
@@ -92,12 +92,12 @@ def main_loop(toolbox, meca_state='on', cam_state='on', us_state='on'):
         # controle :
         if meca_state == 'on':
             try:
-                if(time.time() - start) < 5:
-                    toolbox.set_accel(100)
-                    toolbox.set_steering(angle)
+                if distance > 30:
+                    speed = 100
                 else:
-                    toolbox.set_accel(0)
-                    toolbox.set_steering(angle)
+                    speed = 0
+                toolbox.set_accel(speed)
+                toolbox.set_steering(angle)
             except KeyboardInterrupt:
                 k_interrupt = True
         
@@ -121,13 +121,16 @@ def affiche_image(image = [], title = "Detection d'objets"):
     cv2.waitKey(1)
 
 if __name__ == "__main__":
-    try:
-        # Try to initialize and run the GUI
-        my_app = GUI()
-        my_app.run_button.configure(command=setup_and_start)
-        my_app.mainloop()
-    except Exception as e:
-        # If GUI fails, run in headless mode with default values
-        print(f"GUI initialization failed: {e}")
+    if not is_headless:
+        try:
+            # Try to initialize and run the GUI
+            my_app = GUI()
+            my_app.run_button.configure(command=setup_and_start)
+            my_app.mainloop()
+        except Exception as e:
+            # If GUI fails, run in headless mode with default values
+            print(f"GUI initialization failed: {e}")
+    
+    if is_headless:
         is_headless = True  # Passer en mode headless
-        setup_and_start()
+        setup_and_start(us_state='on')
