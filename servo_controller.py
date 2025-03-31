@@ -7,7 +7,8 @@ def set_steering(angle):
         vis_max = 180.0
         steer_min = 60.0
         steer_max = 150.0
-        steer = steer_min + (float(steer_max-steer_min) * float(angle - vis_min) / float(vis_max - vis_min))
+        #steer = steer_min + (float(steer_max-steer_min) * float(angle - vis_min) / float(vis_max - vis_min))
+        steer = angle - ((vis_max + vis_min)/2) + ((steer_max+steer_min)/2)
         print(f"Steering to {steer}°")
         return steer
 

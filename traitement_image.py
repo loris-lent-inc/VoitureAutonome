@@ -51,10 +51,10 @@ class traitement_image(toolThread):
 
         # On ne garde que le bas de l'image
         polygon = np.array([[
-            (0, 0),
-            (width, 0),
-            (width, height/2),
-            (0, height/2),
+            (width/4, 0),
+            (3*width/4, 0),
+            (3*width/4, 2*height/3),
+            (width/4, 2*height/3),
         ]], np.int32)
 
         cv2.fillPoly(mask, polygon, 255)
