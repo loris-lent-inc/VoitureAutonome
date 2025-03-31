@@ -1,39 +1,68 @@
 #!/usr/bin/env venv/bin/python
-from gui import GUI
+from gui import GUI, TRIGGER_PIN, PWM_PIN, DIR_PIN, STR_PIN, ECHO_PIN
 from threads import Toolbox, Watchdog
 from acceleration_controller import *
 from servo_controller import *
 from traitement_image import *
 from ultrason import *
 import cv2
+import sys
 
-def setup_and_start():
-    my_app.lock()
+is_headless = False
+
+def setup_and_start(meca_state='on', cam_state='on', us_state='on', 
+                    dir_pin=DIR_PIN, pwm_pin=PWM_PIN, str_pin=STR_PIN, 
+                    trig_pin=TRIGGER_PIN, echo_pin=ECHO_PIN):
+    """Setup and start components with provided parameters or defaults"""
+    
+    # If running from GUI, lock it
+    if is_headless:
+        print("Running in headless mode with default values")
+    elif 'my_app' in globals() and hasattr(my_app, 'lock'):
+        my_app.lock()
+        # Get values from GUI
+        if hasattr(my_app, 'meca_state'):
+            meca_state = my_app.meca_state.get()
+        if hasattr(my_app, 'cam_state'):
+            cam_state = my_app.cam_state.get()
+        if hasattr(my_app, 'us_state'):
+            us_state = my_app.us_state.get()
+        if hasattr(my_app, 'dir_spin') and hasattr(my_app.dir_spin, 'var'):
+            dir_pin = int(my_app.dir_spin.var.get())
+        if hasattr(my_app, 'pwm_spin') and hasattr(my_app.pwm_spin, 'var'):
+            pwm_pin = int(my_app.pwm_spin.var.get())
+        if hasattr(my_app, 'str_spin') and hasattr(my_app.str_spin, 'var'):
+            str_pin = int(my_app.str_spin.var.get())
+        if hasattr(my_app, 'trig_spin') and hasattr(my_app.trig_spin, 'var'):
+            trig_pin = int(my_app.trig_spin.var.get())
+        if hasattr(my_app, 'echo_spin') and hasattr(my_app.echo_spin, 'var'):
+            echo_pin = int(my_app.echo_spin.var.get())
+    
     toolbox = Toolbox()
     
     toolbox.watchdog = Watchdog(toolbox)
-    if my_app.meca_state.get() == 'on':
-        toolbox.meca = acceleration_controller(int(my_app.dir_spin.var.get()), int(my_app.pwm_spin.var.get()))
-        toolbox.dir = servo_controller(int(my_app.str_spin.var.get()), angle_min=60, angle_max=140)
-    if my_app.cam_state.get() == 'on':
+    if meca_state == 'on':
+        toolbox.meca = acceleration_controller(dir_pin, pwm_pin)
+        toolbox.dir = servo_controller(str_pin, angle_min=60, angle_max=140)
+    if cam_state == 'on':
         toolbox.cam = traitement_image()
-    if  my_app.us_state.get() == 'on':
-        toolbox.us = ultrason(int(my_app.trig_spin.var.get()), int(my_app.echo_spin.var.get()))
+    if us_state == 'on':
+        toolbox.us = ultrason(trig_pin, echo_pin)
     
-    print(f"MECA:{my_app.meca_state.get()} ; CAM: {my_app.cam_state.get()} ; US: {my_app.us_state.get()}")
+    print(f"MECA:{meca_state} ; CAM: {cam_state} ; US: {us_state}")
     print("Finished setting up threads and components")
 
-    main_loop(toolbox)
+    main_loop(toolbox, meca_state, cam_state, us_state)
     return toolbox
 
-def main_loop(toolbox):
+def main_loop(toolbox, meca_state='on', cam_state='on', us_state='on'):
     # Start threads
-    if my_app.meca_state.get() == 'on':
+    if meca_state == 'on':
         toolbox.meca.start()
         toolbox.dir.start()
-    if my_app.cam_state.get() == 'on':
+    if cam_state == 'on':
         toolbox.cam.start()
-    if my_app.us_state.get() == 'on':
+    if us_state == 'on':
         toolbox.us.start()
     
     # Starting watchdog
@@ -50,18 +79,18 @@ def main_loop(toolbox):
     start = time.time()
     while keep_going:
         # mesure:
-        if my_app.us_state.get() == 'on':
+        if us_state == 'on':
             distance = toolbox.last_distance()
         
         # traitement:
-        if my_app.cam_state.get() == 'on':
+        if cam_state == 'on':
             image = toolbox.last_image()
             angle = toolbox.last_heading()
             fps = toolbox.last_fps()
             affiche_image(image)
         
         # controle :
-        if my_app.meca_state.get() == 'on':
+        if meca_state == 'on':
             try:
                 if(time.time() - start) < 5:
                     toolbox.set_accel(100)
@@ -79,20 +108,26 @@ def main_loop(toolbox):
 
         # conditionnal exit:
         if k_interrupt:
-            tools.finish()
+            toolbox.finish()
             keep_going = False
     
     return True
 
 def affiche_image(image = [], title = "Detection d'objets"):
-    if len(image) == 0:
+    if is_headless or len(image) == 0:
         return
     cv2.namedWindow(title)
     cv2.imshow(title,image )
     cv2.waitKey(1)
 
 if __name__ == "__main__":
-    my_app = GUI()
-    my_app.run_button.configure(command=setup_and_start)
-    my_app.mainloop()
-    
+    try:
+        # Try to initialize and run the GUI
+        my_app = GUI()
+        my_app.run_button.configure(command=setup_and_start)
+        my_app.mainloop()
+    except Exception as e:
+        # If GUI fails, run in headless mode with default values
+        print(f"GUI initialization failed: {e}")
+        is_headless = True  # Passer en mode headless
+        setup_and_start()

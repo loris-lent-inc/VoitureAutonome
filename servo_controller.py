@@ -9,7 +9,7 @@ def set_steering(angle):
         steer_max = 150.0
         #steer = steer_min + (float(steer_max-steer_min) * float(angle - vis_min) / float(vis_max - vis_min))
         steer = angle - ((vis_max + vis_min)/2) + ((steer_max+steer_min)/2)
-        print(f"Steering to {steer}°")
+        #print(f"Steering to {steer}°")
         return steer
 
 
@@ -77,7 +77,7 @@ class servo_controller(toolThread):
         self.pi.set_servo_pulsewidth(self.pin, pulse_width)
         self.angle_courant = angle
         time.sleep(0.3)  # Attendre que le servo atteigne la position
-        print(f"angle:{angle}")
+        #print(f"angle:{angle}")
     
     def balayer(self, debut, fin, pas=10, temps_attente=0.2):
         """
