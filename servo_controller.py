@@ -48,7 +48,7 @@ class servo_controller(toolThread):
         self.angle_courant = None
     
     def angle_vers_pulse_width(self, angle):
-        """
+        """0..
         Convertir un angle en largeur d'impulsion (en μs).
         Pour la plupart des servos standard :
         - 500μs correspond à 0°
@@ -77,7 +77,7 @@ class servo_controller(toolThread):
         self.pi.set_servo_pulsewidth(self.pin, pulse_width)
         self.angle_courant = angle
         time.sleep(0.3)  # Attendre que le servo atteigne la position
-        #print(f"angle:{angle}")
+        print(f"angle:{angle}")
     
     def balayer(self, debut, fin, pas=10, temps_attente=0.2):
         """
@@ -145,17 +145,18 @@ if __name__ == "__main__":
 #         time.sleep(1)
         #servo.balayer(105, 145, 5, 1)
         #servo.balayer(105, 60, 5, 1)
-        print("Tournage à 100°")
-        servo.tourner(105)
-        time.sleep(1)
-        servo.tourner(70)
-        time.sleep(1)
-        servo.tourner(105)
-        time.sleep(1)
-        servo.tourner(140)
-        time.sleep(1)
-        servo.tourner(105)
-        time.sleep(1)
+        while True:
+            #print("Tournage à 100°")
+            servo.tourner(105)
+            time.sleep(0.5)
+            servo.tourner(70)
+            time.sleep(0.5)
+            servo.tourner(105)
+            time.sleep(0.5)
+            servo.tourner(140)
+            time.sleep(0.5)
+            servo.tourner(105)
+            time.sleep(0.5)
         
     except KeyboardInterrupt:
         print("Programme interrompu par l'utilisateur")

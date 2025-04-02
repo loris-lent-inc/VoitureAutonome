@@ -261,7 +261,7 @@ class traitement_image(toolThread):
 
             # Génération de l'image finale
             #											self.edges ou frame
-            heading_image = self.display_heading_line(frame, self.curr_steering_angle, (255,255,255))
+            heading_image = self.display_heading_line(self.edges, self.curr_steering_angle, (255,255,255))
             
             # Mesures de performance
             self.end_time = time.perf_counter()

@@ -12,7 +12,7 @@ is_headless = False
 
 def setup_and_start(meca_state='on', cam_state='on', us_state='on', 
                     dir_pin=DIR_PIN, pwm_pin=PWM_PIN, str_pin=STR_PIN, 
-                    trig_pin=TRIGGER_PIN, echo_pin=ECHO_PIN):
+                    trig_pin=2, echo_pin=3):
     """Setup and start components with provided parameters or defaults"""
     
     # If running from GUI, lock it
@@ -47,7 +47,7 @@ def setup_and_start(meca_state='on', cam_state='on', us_state='on',
     if cam_state == 'on':
         toolbox.cam = traitement_image()
     if us_state == 'on':
-        toolbox.us = ultrason(trig_pin, echo_pin)
+        toolbox.us = ultrason(3,2)
     
     print(f"MECA:{meca_state} ; CAM: {cam_state} ; US: {us_state}")
     print("Finished setting up threads and components")
@@ -92,8 +92,10 @@ def main_loop(toolbox, meca_state='on', cam_state='on', us_state='on'):
         # controle :
         if meca_state == 'on':
             try:
-                if distance > 30:
-                    speed = 100
+                if (time.time() - start) < 15:
+                   speed = 0
+                elif distance > 30 or distance < 0:
+                    speed = 0
                 else:
                     speed = 0
                 toolbox.set_accel(speed)
@@ -129,8 +131,8 @@ if __name__ == "__main__":
             my_app.mainloop()
         except Exception as e:
             # If GUI fails, run in headless mode with default values
+            is_headless = True  # Passer en mode headless
             print(f"GUI initialization failed: {e}")
     
     if is_headless:
-        is_headless = True  # Passer en mode headless
         setup_and_start(us_state='on')
