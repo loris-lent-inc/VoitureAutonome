@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 from threads import toolThread
+from gui import TRIGGER_PIN, ECHO_PIN
 
 class ultrason(toolThread):
     # Configuration des broches GPIO
@@ -42,24 +43,30 @@ class ultrason(toolThread):
     
     def run(self):
         while self.running:
-            self.mesurer_distance()
-            self.heartbeat()
-            time.sleep(1)
+            try:
+                self.mesurer_distance()
+                self.heartbeat()
+                time.sleep(0.1)
+            except Exception as e:
+                self.running = False
         
         self.finish()
         
     def finish(self):
+        print(f"Finishing US tool")
+        self.running = False
         GPIO.cleanup()  # Réinitialise les GPIO
 
 if __name__ == "__main__":
-    us = ultrason(6, 5)
-
+    us = ultrason(TRIGGER_PIN, ECHO_PIN)
     try:
         while True:
             distance = us.mesurer_distance()
-            print(f"Distance mesurée : {distance:.2f} cm")
-            time.sleep(1)  # Pause d'une seconde entre les mesures
-    except KeyboardInterrupt:
+            if distance < 30 :
+                print(f"Distance mesurée : {distance:.2f} cm")
+                raise Exception
+            time.sleep(0.05)  # Pause d'une seconde entre les mesures
+    except Exception:
         print("Arrêt du programme.")
         us.finish()
        

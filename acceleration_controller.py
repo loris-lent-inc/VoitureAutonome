@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 import pigpio
 from threads import toolThread
 import  time
+from gui import DIR_PIN, PWM_PIN
 
 class acceleration_controller(toolThread):
     def __init__(self, DIR_pin, PWM_pin):
@@ -44,20 +45,27 @@ class acceleration_controller(toolThread):
         while self.running:
             try:
                 self.setAccel(self.next_speed)
-            except KeyboardInterrupt:
+                self.heartbeat()
+                time.sleep(0.2)
+            except Exception as e:
                 self.running = False
+
         
         self.finish()
     
     def finish(self):
-        self.pwm.ChangeDutyCycle(0)
+        print(f"Finishing throttle tool")
+        try:
+            self.set_PWM(0)
+        except:
+            pass
         self.pwm.stop()
         self.running = False
         GPIO.cleanup()
 
 
 if __name__ == "__main__":
-    control = acceleration_controller(16, 13)
+    control = acceleration_controller(DIR_PIN, PWM_PIN)
     try:
         while True:
             for i in range(0, 101, 1):

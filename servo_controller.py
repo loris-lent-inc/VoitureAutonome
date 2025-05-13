@@ -1,7 +1,7 @@
 import pigpio
 from threads import toolThread
 import time
-
+from gui import STR_PIN
 def set_steering(angle):
         vis_min = 0.0
         vis_max = 180.0
@@ -76,27 +76,8 @@ class servo_controller(toolThread):
         pulse_width = self.angle_vers_pulse_width(angle)
         self.pi.set_servo_pulsewidth(self.pin, pulse_width)
         self.angle_courant = angle
-        time.sleep(0.3)  # Attendre que le servo atteigne la position
-        print(f"angle:{angle}")
-    
-    def balayer(self, debut, fin, pas=10, temps_attente=0.2):
-        """
-        Balayer le servo d'un angle à un autre par incréments.
-        
-        Args:
-            debut (float): Angle de départ en degrés
-            fin (float): Angle de fin en degrés
-            pas (float): Incrément en degrés
-            temps_attente (float): Temps d'attente entre chaque pas en secondes
-        """
-        if debut < fin:
-            angles = range(int(debut), int(fin) + 1, pas)
-        else:
-            angles = range(int(debut), int(fin) - 1, -pas)
-            
-        for angle in angles:
-            self.tourner(angle)
-            time.sleep(temps_attente)
+        #time.sleep(0.3)  # Attendre que le servo atteigne la position
+        #print(f"angle:{angle}")
 
     def run(self):
         while self.running:
@@ -107,8 +88,8 @@ class servo_controller(toolThread):
                     #self.needs_steering = False
                 
                 self.heartbeat()
-                time.sleep(0.1)
-            except KeyboardInterrupt:
+                time.sleep(0.2)
+            except Exception as e:
                 self.running = False
         
         self.finish()
@@ -119,6 +100,8 @@ class servo_controller(toolThread):
         """
         try:
             # Arrêter le servo en mettant la largeur d'impulsion à 0
+            print(f"Finishing servo tool")
+            self.running = False
             self.pi.set_servo_pulsewidth(self.pin, 0)
             self.pi.stop()
         except:
@@ -129,22 +112,9 @@ class servo_controller(toolThread):
 if __name__ == "__main__":
     try:
         # Créer un objet servo sur la broche GPIO 18
-        servo = servo_controller(SRV_PIN=12, freq=200, angle_min=60, angle_max=140)
+        servo = servo_controller(SRV_PIN=STR_PIN, freq=200, angle_min=60, angle_max=140)
         
         # Tourner à différents angles
-#         print("Tournage à 0°")
-#         servo.tourner(0)
-#         time.sleep(1)
-#         
-#         print("Tournage à 90°")
-#         servo.tourner(90)
-#         time.sleep(1)
-#         
-#         print("Tournage à 180°")
-#         servo.tourner(180)
-#         time.sleep(1)
-        #servo.balayer(105, 145, 5, 1)
-        #servo.balayer(105, 60, 5, 1)
         while True:
             #print("Tournage à 100°")
             servo.tourner(105)

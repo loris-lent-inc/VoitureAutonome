@@ -12,7 +12,7 @@ is_headless = False
 
 def setup_and_start(meca_state='on', cam_state='on', us_state='on', 
                     dir_pin=DIR_PIN, pwm_pin=PWM_PIN, str_pin=STR_PIN, 
-                    trig_pin=2, echo_pin=3):
+                    trig_pin=TRIGGER_PIN, echo_pin=ECHO_PIN):
     """Setup and start components with provided parameters or defaults"""
     
     # If running from GUI, lock it
@@ -43,16 +43,17 @@ def setup_and_start(meca_state='on', cam_state='on', us_state='on',
     toolbox.watchdog = Watchdog(toolbox)
     if meca_state == 'on':
         toolbox.meca = acceleration_controller(dir_pin, pwm_pin)
-        toolbox.dir = servo_controller(str_pin, angle_min=60, angle_max=140)
+        toolbox.dir = servo_controller(str_pin, angle_min=75, angle_max=115)
     if cam_state == 'on':
         toolbox.cam = traitement_image()
     if us_state == 'on':
-        toolbox.us = ultrason(3,2)
+        toolbox.us = ultrason(trig_pin,echo_pin)
     
     print(f"MECA:{meca_state} ; CAM: {cam_state} ; US: {us_state}")
     print("Finished setting up threads and components")
 
     main_loop(toolbox, meca_state, cam_state, us_state)
+    print(f"Main loop exited")
     return toolbox
 
 def main_loop(toolbox, meca_state='on', cam_state='on', us_state='on'):
@@ -73,8 +74,11 @@ def main_loop(toolbox, meca_state='on', cam_state='on', us_state='on'):
     k_interrupt = False
     distance = 50
     image = []
+    images = []
+    prop = 0.1
+    max_images = 200
     fps = 0
-    angle = 0
+    angle = 90
     speed = accel = 5
     start = time.time()
     while keep_going:
@@ -87,32 +91,45 @@ def main_loop(toolbox, meca_state='on', cam_state='on', us_state='on'):
             image = toolbox.last_image()
             angle = toolbox.last_heading()
             fps = toolbox.last_fps()
+            if(random.random() < prop):
+                images.append(image)
+                if len(images) > max_images:
+                    images.pop(0)
             affiche_image(image)
         
         # controle :
         if meca_state == 'on':
             try:
-                if (time.time() - start) < 15:
-                   speed = 0
-                elif distance > 30 or distance < 0:
+                now = time.time()
+                speed = 35
+                if(now - toolbox.last_lane_detection() > 3):
                     speed = 0
-                else:
+                    angle = 90
+                elif ((now - start) > 55) or (distance < 50 and distance >= 0):
                     speed = 0
+                
+                if (now - toolbox.last_lane_detection() < 2):
+                    toolbox.set_steering(angle)
                 toolbox.set_accel(speed)
-                toolbox.set_steering(angle)
             except KeyboardInterrupt:
                 k_interrupt = True
         
-        print(f"Distance: {distance:.1f}cm;\tAngle: {angle:.1f};\tFPS: {fps:.1f};\tSpeed: {speed}")
+        print(f"Distance: {distance:.1f}cm;\tLane Detect: {now-toolbox.last_lane_detection()}s;\tAngle: {angle:.1f};\tFPS: {fps:.1f};\tSpeed: {speed}")
         
         # sleep:
-        time.sleep(0.5)
+        try:
+            time.sleep(0.1)
+        except KeyboardInterrupt:
+            k_interrupt = True
 
         # conditionnal exit:
         if k_interrupt:
+            print("KeyboardInterrupt detected, exiting...")
             toolbox.finish()
+            print("Toolbox finished")
             keep_going = False
     
+    print("Main loop finished")
     return True
 
 def affiche_image(image = [], title = "Detection d'objets"):
@@ -135,4 +152,6 @@ if __name__ == "__main__":
             print(f"GUI initialization failed: {e}")
     
     if is_headless:
-        setup_and_start(us_state='on')
+        setup_and_start(us_state='on', meca_state='on', cam_state='on') 
+        print(f"Everything is finished, application exiting")
+        exit(0)

@@ -1,7 +1,7 @@
 from spinbox import gui, Spinbox
 
-TRIGGER_PIN = 2
-ECHO_PIN = 3
+TRIGGER_PIN = 3
+ECHO_PIN = 2
 STR_PIN = 12
 DIR_PIN = 16
 PWM_PIN = 13

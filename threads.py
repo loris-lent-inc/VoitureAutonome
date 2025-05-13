@@ -19,10 +19,12 @@ class Toolbox:
 
     def finish(self):
         if not self.isFinished:
+            print(f"Finishing All tools:")
             self.meca.finish()
             self.cam.finish()
             self.dir.finish()
             self.us.finish()
+            self.watchdog.finish()
             self.isFinished = True
             
     def last_distance(self):
@@ -30,6 +32,9 @@ class Toolbox:
     
     def last_image(self):
         return self.cam.last_image
+    
+    def last_lane_detection(self):
+        return self.cam.last_detection
     
     def last_heading(self):
         return self.cam.curr_steering_angle
@@ -67,7 +72,7 @@ class toolThread(threading.Thread, ABC):
 class Watchdog(threading.Thread):
     def __init__(self, toolbox, timeout=10):
         threading.Thread.__init__(self)
-        self.threads = [toolbox.meca, toolbox.cam, toolbox.us]
+        self.threads = [toolbox.meca, toolbox.dir, toolbox.cam, toolbox.us]
         self.running = True
         self.timeout = timeout
 
@@ -91,3 +96,7 @@ class Watchdog(threading.Thread):
             time.sleep(1)
         
         self.finish()
+    
+    def finish(self):
+        print(f"Finishing Watchdog")
+        self.running = False
